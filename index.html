@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>DISK PÃO - TOTEM DE PONTO</title>
+
+
+  <!-- =====================================================
+       BIBLIOTECA DE QR CODE
+       ===================================================== -->
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    body {
+
+      margin: 0;
+
+      padding: 0;
+
+      background: #f4f4f4;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      min-height: 100vh;
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+    }
+
+
+    .totem {
+
+      width: 100%;
+
+      max-width: 650px;
+
+      min-height: 100vh;
+
+      background: white;
+
+      padding: 30px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: center;
+
+      text-align: center;
+
+    }
+
+
+    .logo {
+
+      font-size: 36px;
+
+      font-weight: bold;
+
+      margin-bottom: 10px;
+
+    }
+
+
+    .titulo {
+
+      font-size: 26px;
+
+      font-weight: bold;
+
+      margin-bottom: 25px;
+
+    }
+
+
+    #leitor {
+
+      width: 100%;
+
+      max-width: 420px;
+
+      margin: 0 auto 25px auto;
+
+    }
+
+
+    .status {
+
+      font-size: 20px;
+
+      font-weight: bold;
+
+      margin: 15px 0;
+
+      min-height: 30px;
+
+    }
+
+
+    .funcionario {
+
+      display: none;
+
+      background: #f1f1f1;
+
+      border-radius: 15px;
+
+      padding: 25px;
+
+      margin-top: 15px;
+
+    }
+
+
+    .nome {
+
+      font-size: 28px;
+
+      font-weight: bold;
+
+      margin-bottom: 10px;
+
+    }
+
+
+    .matricula {
+
+      font-size: 20px;
+
+      margin-bottom: 20px;
+
+    }
+
+
+    .botoes {
+
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 12px;
+
+      margin-top: 20px;
+
+    }
+
+
+    button {
+
+      padding: 18px 10px;
+
+      border: none;
+
+      border-radius: 10px;
+
+      font-size: 17px;
+
+      font-weight: bold;
+
+      cursor: pointer;
+
+    }
+
+
+    button:disabled {
+
+      opacity: 0.5;
+
+      cursor: not-allowed;
+
+    }
+
+
+    .instrucao {
+
+      font-size: 18px;
+
+      margin-top: 20px;
+
+    }
+
+
+    .erro {
+
+      color: #b00020;
+
+    }
+
+
+    .sucesso {
+
+      color: #168000;
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+  <div class="totem">
+
+
+    <div class="logo">
+      DISK PÃO
+    </div>
+
+
+    <div class="titulo">
+      TOTEM DE PONTO
+    </div>
+
+
+    <div id="leitor"></div>
+
+
+    <div
+      id="status"
+      class="status"
+    >
+      Aponte a câmera para o QR Code
+    </div>
+
+
+    <div
+      id="funcionario"
+      class="funcionario"
+    >
+
+      <div
+        id="nome"
+        class="nome"
+      ></div>
+
+
+      <div
+        id="matricula"
+        class="matricula"
+      ></div>
+
+
+      <div class="instrucao">
+        Selecione o tipo de registro
+      </div>
+
+
+      <div class="botoes">
+
+        <button
+          onclick="registrar('ENTRADA')"
+        >
+          ENTRADA
+        </button>
+
+
+        <button
+          onclick="registrar('SAIDA PRO ALMOÇO')"
+        >
+          SAÍDA ALMOÇO
+        </button>
+
+
+        <button
+          onclick="registrar('VOLTA DO ALMOÇO')"
+        >
+          VOLTA ALMOÇO
+        </button>
+
+
+        <button
+          onclick="registrar('SAIDA')"
+        >
+          SAÍDA
+        </button>
+
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+  <script>
+
+
+    // ======================================================
+    // URL DO SEU WEB APP
+    // ======================================================
+
+    const URL_APPS_SCRIPT =
+      "https://script.google.com/macros/s/AKfycbxSnGjvWrTHoJn8ve3vDJK6HQf8AxofFWJ1BVuRwsLAB2yHijHftfrfvgLkvB68tnOx/exec";
+
+
+    let processando = false;
+
+    let funcionarioAtual = null;
+
+    let leitorQR = null;
+
+
+    // ======================================================
+    // ENVIA DADOS PARA O APPS SCRIPT
+    // ======================================================
+
+    async function enviarParaAppsScript(dados) {
+
+      const resposta =
+        await fetch(
+          URL_APPS_SCRIPT,
+          {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "text/plain;charset=utf-8"
+            },
+
+            body:
+              JSON.stringify(dados)
+
+          }
+        );
+
+
+      return await resposta.json();
+
+    }
+
+
+    // ======================================================
+    // QR CODE LIDO
+    // ======================================================
+
+    async function qrCodeLido(codigo) {
+
+      if (processando) {
+        return;
+      }
+
+
+      processando = true;
+
+
+      const status =
+        document.getElementById(
+          "status"
+        );
+
+
+      status.className =
+        "status";
+
+
+      status.innerText =
+        "Identificando funcionário...";
+
+
+      try {
+
+        const resultado =
+          await enviarParaAppsScript({
+
+            acao:
+              "identificar",
+
+            codigoQR:
+              codigo
+
+          });
+
+
+        mostrarFuncionario(
+          resultado
+        );
+
+
+      } catch (erro) {
+
+        mostrarErro(
+          erro
+        );
+
+      }
+
+    }
+
+
+    // ======================================================
+    // MOSTRA FUNCIONÁRIO
+    // ======================================================
+
+    function mostrarFuncionario(
+      resultado
+    ) {
+
+      const status =
+        document.getElementById(
+          "status"
+        );
+
+
+      if (
+        !resultado ||
+        !resultado.encontrado
+      ) {
+
+        status.className =
+          "status erro";
+
+
+        status.innerText =
+          resultado &&
+          resultado.mensagem
+            ? resultado.mensagem
+            : "Funcionário não encontrado.";
+
+
+        setTimeout(
+          reiniciarLeitor,
+          3000
+        );
+
+
+        return;
+
+      }
+
+
+      funcionarioAtual =
+        resultado;
+
+
+      status.className =
+        "status sucesso";
+
+
+      status.innerText =
+        "Funcionário identificado";
+
+
+      document.getElementById(
+        "nome"
+      ).innerText =
+        resultado.nome;
+
+
+      document.getElementById(
+        "matricula"
+      ).innerText =
+        "Matrícula: " +
+        resultado.matricula;
+
+
+      document.getElementById(
+        "funcionario"
+      ).style.display =
+        "block";
+
+    }
+
+
+    // ======================================================
+    // REGISTRAR PONTO
+    // ======================================================
+
+    async function registrar(
+      tipo
+    ) {
+
+      if (
+        !funcionarioAtual
+      ) {
+
+        return;
+
+      }
+
+
+      const botoes =
+        document.querySelectorAll(
+          "button"
+        );
+
+
+      botoes.forEach(
+        function(botao) {
+
+          botao.disabled =
+            true;
+
+        }
+      );
+
+
+      const status =
+        document.getElementById(
+          "status"
+        );
+
+
+      status.className =
+        "status";
+
+
+      status.innerText =
+        "Registrando ponto...";
+
+
+      try {
+
+        const resultado =
+          await enviarParaAppsScript({
+
+            acao:
+              "registrar",
+
+            matricula:
+              funcionarioAtual.matricula,
+
+            nome:
+              funcionarioAtual.nome,
+
+            tipo:
+              tipo
+
+          });
+
+
+        if (
+          !resultado ||
+          !resultado.sucesso
+        ) {
+
+          throw new Error(
+
+            resultado &&
+            resultado.mensagem
+              ? resultado.mensagem
+              : "Não foi possível registrar o ponto."
+
+          );
+
+        }
+
+
+        status.className =
+          "status sucesso";
+
+
+        status.innerText =
+          "PONTO REGISTRADO COM SUCESSO";
+
+
+        setTimeout(
+          reiniciarLeitor,
+          2500
+        );
+
+
+      } catch (erro) {
+
+        mostrarErro(
+          erro
+        );
+
+        botoes.forEach(
+          function(botao) {
+
+            botao.disabled =
+              false;
+
+          }
+        );
+
+      }
+
+    }
+
+
+    // ======================================================
+    // ERRO
+    // ======================================================
+
+    function mostrarErro(
+      erro
+    ) {
+
+      const status =
+        document.getElementById(
+          "status"
+        );
+
+
+      status.className =
+        "status erro";
+
+
+      status.innerText =
+        "Erro: " +
+        (
+          erro.message ||
+          erro
+        );
+
+
+      setTimeout(
+        reiniciarLeitor,
+        4000
+      );
+
+    }
+
+
+    // ======================================================
+    // REINICIAR
+    // ======================================================
+
+    function reiniciarLeitor() {
+
+      processando =
+        false;
+
+      funcionarioAtual =
+        null;
+
+
+      document.getElementById(
+        "funcionario"
+      ).style.display =
+        "none";
+
+
+      const status =
+        document.getElementById(
+          "status"
+        );
+
+
+      status.className =
+        "status";
+
+
+      status.innerText =
+        "Aponte a câmera para o QR Code";
+
+
+      document
+        .querySelectorAll(
+          "button"
+        )
+        .forEach(
+          function(botao) {
+
+            botao.disabled =
+              false;
+
+          }
+        );
+
+    }
+
+
+    // ======================================================
+    // INICIAR CÂMERA
+    // ======================================================
+
+    function iniciarLeitor() {
+
+      leitorQR =
+        new Html5Qrcode(
+          "leitor"
+        );
+
+
+      leitorQR.start(
+
+        {
+          facingMode:
+            "environment"
+        },
+
+        {
+
+          fps: 10,
+
+          qrbox: {
+            width: 250,
+            height: 250
+          }
+
+        },
+
+        qrCodeLido,
+
+        function() {
+
+          // Ignora pequenos erros
+          // durante a leitura.
+
+        }
+
+      )
+
+      .catch(
+        function(erro) {
+
+          const status =
+            document.getElementById(
+              "status"
+            );
+
+
+          status.className =
+            "status erro";
+
+
+          status.innerText =
+            "Não foi possível acessar a câmera.";
+
+
+          console.error(
+            erro
+          );
+
+        }
+      );
+
+    }
+
+
+    // ======================================================
+    // INICIAR
+    // ======================================================
+
+    window.onload =
+      iniciarLeitor;
+
+
+  </script>
+
+
+</body>
+
+</html>
