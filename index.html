@@ -700,58 +700,137 @@
         );
 
 
-      leitorQR.start(
+      Html5Qrcode.getCameras()
 
-        {
-          facingMode:
-  "user"
-        },
+        .then(
+          function(cameras) {
 
-        {
+            if (
+              !cameras ||
+              cameras.length === 0
+            ) {
 
-          fps: 10,
+              throw new Error(
+                "Nenhuma câmera encontrada."
+              );
 
-          qrbox: {
-            width: 250,
-            height: 250
-          }
+            }
 
-        },
 
-        qrCodeLido,
+            // ==================================================
+            // PROCURA A CÂMERA FRONTAL
+            // ==================================================
 
-        function() {
+            const cameraFrontal =
+              cameras.find(
+                function(camera) {
 
-          // Ignora pequenos erros
-          // durante a leitura.
+                  const nome =
+                    (
+                      camera.label ||
+                      ""
+                    ).toLowerCase();
 
-        }
 
-      )
+                  return (
 
-      .catch(
-        function(erro) {
+                    nome.includes("front") ||
 
-          const status =
-            document.getElementById(
-              "status"
+                    nome.includes("frontal") ||
+
+                    nome.includes("user") ||
+
+                    nome.includes("selfie")
+
+                  );
+
+                }
+              );
+
+
+            // ==================================================
+            // ESCOLHE A CÂMERA
+            // ==================================================
+
+            const cameraEscolhida =
+              cameraFrontal
+                ? cameraFrontal.id
+                : cameras[0].id;
+
+
+            console.log(
+              "Câmeras encontradas:",
+              cameras
             );
 
 
-          status.className =
-            "status erro";
+            console.log(
+              "Câmera escolhida:",
+              cameraEscolhida
+            );
 
 
-          status.innerText =
-            "Não foi possível acessar a câmera.";
+            // ==================================================
+            // INICIA O LEITOR
+            // ==================================================
+
+            return leitorQR.start(
+
+              cameraEscolhida,
+
+              {
+
+                fps: 10,
+
+                qrbox: {
+
+                  width: 250,
+
+                  height: 250
+
+                }
+
+              },
+
+              qrCodeLido,
+
+              function() {
+
+                // Ignora pequenos erros
+                // durante a leitura.
+
+              }
+
+            );
+
+          }
+
+        )
+
+        .catch(
+          function(erro) {
+
+            const status =
+              document.getElementById(
+                "status"
+              );
 
 
-          console.error(
-            erro
-          );
+            status.className =
+              "status erro";
 
-        }
-      );
+
+            status.innerText =
+              "Não foi possível acessar a câmera.";
+
+
+            console.error(
+              "Erro ao iniciar câmera:",
+              erro
+            );
+
+          }
+        );
 
     }
 
