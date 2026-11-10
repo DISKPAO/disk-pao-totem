@@ -1,364 +1,265 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
 
   <title>DISK PÃO - TOTEM DE PONTO</title>
 
-
-  <!-- =====================================================
-       BIBLIOTECA DE QR CODE
-       ===================================================== -->
-
-  <script src="https://unpkg.com/html5-qrcode"></script>
-
+  <!-- BIBLIOTECA QR CODE -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
 
-
     body {
-
       margin: 0;
-
       padding: 0;
-
       background: #f4f4f4;
-
-      font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
+      font-family: Arial, Helvetica, sans-serif;
       min-height: 100vh;
-
       display: flex;
-
       justify-content: center;
-
       align-items: center;
-
     }
-
 
     .totem {
-
       width: 100%;
-
       max-width: 650px;
-
       min-height: 100vh;
-
       background: white;
-
       padding: 30px;
-
       display: flex;
-
       flex-direction: column;
-
       justify-content: center;
-
       text-align: center;
-
     }
-
 
     .logo {
-
       font-size: 36px;
-
       font-weight: bold;
-
       margin-bottom: 10px;
-
     }
-
 
     .titulo {
-
       font-size: 26px;
-
       font-weight: bold;
-
       margin-bottom: 25px;
-
     }
-
 
     #leitor {
-
       width: 100%;
-
       max-width: 420px;
-
+      min-height: 280px;
       margin: 0 auto 25px auto;
-
+      overflow: hidden;
     }
 
+    #leitor video {
+      width: 100% !important;
+      height: auto !important;
+      object-fit: cover;
+    }
 
     .status {
-
       font-size: 20px;
-
       font-weight: bold;
-
       margin: 15px 0;
-
       min-height: 30px;
-
     }
-
 
     .funcionario {
-
       display: none;
-
       background: #f1f1f1;
-
       border-radius: 15px;
-
       padding: 25px;
-
       margin-top: 15px;
-
     }
-
 
     .nome {
-
       font-size: 28px;
-
       font-weight: bold;
-
       margin-bottom: 10px;
-
     }
-
 
     .matricula {
-
       font-size: 20px;
-
       margin-bottom: 20px;
-
     }
-
 
     .botoes {
-
       display: grid;
-
       grid-template-columns: 1fr 1fr;
-
       gap: 12px;
-
       margin-top: 20px;
-
     }
-
 
     button {
-
       padding: 18px 10px;
-
       border: none;
-
       border-radius: 10px;
-
       font-size: 17px;
-
       font-weight: bold;
-
       cursor: pointer;
-
     }
-
 
     button:disabled {
-
       opacity: 0.5;
-
       cursor: not-allowed;
-
     }
-
 
     .instrucao {
-
       font-size: 18px;
-
       margin-top: 20px;
-
     }
-
 
     .erro {
-
       color: #b00020;
-
     }
-
 
     .sucesso {
-
       color: #168000;
-
     }
 
+    @media (max-width: 480px) {
+      .totem {
+        padding: 20px 15px;
+      }
+
+      .logo {
+        font-size: 32px;
+      }
+
+      .titulo {
+        font-size: 23px;
+      }
+
+      #leitor {
+        min-height: 250px;
+      }
+    }
   </style>
-
 </head>
-
 
 <body>
 
-
   <div class="totem">
-
 
     <div class="logo">
       DISK PÃO
     </div>
 
-
     <div class="titulo">
       TOTEM DE PONTO
     </div>
 
-
     <div id="leitor"></div>
 
-
-    <div
-      id="status"
-      class="status"
-    >
-      Aponte a câmera para o QR Code
+    <div id="status" class="status">
+      Preparando a câmera...
     </div>
 
+    <div id="funcionario" class="funcionario">
 
-    <div
-      id="funcionario"
-      class="funcionario"
-    >
+      <div id="nome" class="nome"></div>
 
-      <div
-        id="nome"
-        class="nome"
-      ></div>
-
-
-      <div
-        id="matricula"
-        class="matricula"
-      ></div>
-
+      <div id="matricula" class="matricula"></div>
 
       <div class="instrucao">
         Selecione o tipo de registro
       </div>
 
-
       <div class="botoes">
 
-        <button
-          onclick="registrar('ENTRADA')"
-        >
+        <button onclick="registrar('ENTRADA')">
           ENTRADA
         </button>
 
-
-        <button
-        onclick="registrar('SAIDA ALMOCO')"
-        >
+        <button onclick="registrar('SAIDA ALMOCO')">
           SAÍDA ALMOÇO
         </button>
 
-
-        <button
-         onclick="registrar('VOLTA ALMOCO')"
-        >
+        <button onclick="registrar('VOLTA ALMOCO')">
           VOLTA ALMOÇO
         </button>
 
-
-        <button
-          onclick="registrar('SAIDA')"
-        >
+        <button onclick="registrar('SAIDA')">
           SAÍDA
         </button>
 
       </div>
-
     </div>
-
-
   </div>
-
 
   <script>
 
+    // =====================================================
+    // URL OFICIAL DO APPS SCRIPT
+    // =====================================================
 
-    // ======================================================
-    // URL DO SEU WEB APP
-    // ======================================================
-
-   const URL_APPS_SCRIPT =
-  const URL_APPS_SCRIPT =
-  "https://script.google.com/macros/s/AKfycbyA42Y2TOYFqzUviWMbOPXsk_Mu4hYFP-qKJWgxbEo-E8FQeyrGLxAJDaFXXc5hhIUz/exec";
+    const URL_APPS_SCRIPT =
+      "https://script.google.com/macros/s/AKfycbyA42Y2TOYFqzUviWMbOPXsk_Mu4hYFP-qKJWgxbEo-E8FQeyrGLxAJDaFXXc5hhIUz/exec";
 
 
     let processando = false;
-
     let funcionarioAtual = null;
-
     let leitorQR = null;
+    let cameraIniciada = false;
 
 
-    // ======================================================
-    // ENVIA DADOS PARA O APPS SCRIPT
-    // ======================================================
+    // =====================================================
+    // ATUALIZAR STATUS
+    // =====================================================
+
+    function atualizarStatus(mensagem, classe = "status") {
+
+      const status = document.getElementById("status");
+
+      status.className = classe;
+      status.innerText = mensagem;
+
+    }
+
+
+    // =====================================================
+    // ENVIAR DADOS PARA O APPS SCRIPT
+    // =====================================================
 
     async function enviarParaAppsScript(dados) {
 
-      const resposta =
-        await fetch(
-          URL_APPS_SCRIPT,
-          {
+      const resposta = await fetch(URL_APPS_SCRIPT, {
 
-            method: "POST",
+        method: "POST",
 
-            headers: {
-              "Content-Type":
-                "text/plain;charset=utf-8"
-            },
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
 
-            body:
-              JSON.stringify(dados)
+        body: JSON.stringify(dados)
 
-          }
+      });
+
+      if (!resposta.ok) {
+
+        throw new Error(
+          "Falha de comunicação com o servidor. Código: " +
+          resposta.status
         );
 
+      }
 
       return await resposta.json();
 
     }
 
 
-    // ======================================================
+    // =====================================================
     // QR CODE LIDO
-    // ======================================================
+    // =====================================================
 
     async function qrCodeLido(codigo) {
 
@@ -366,204 +267,113 @@
         return;
       }
 
-
       processando = true;
 
-
-      const status =
-        document.getElementById(
-          "status"
-        );
-
-
-      status.className =
-        "status";
-
-
-      status.innerText =
-        "Identificando funcionário...";
-
+      atualizarStatus("Identificando funcionário...");
 
       try {
 
-        const resultado =
-          await enviarParaAppsScript({
+        const resultado = await enviarParaAppsScript({
 
-            acao:
-              "identificar",
+          acao: "identificar",
 
-            codigoQR:
-              codigo
+          codigoQR: codigo
 
-          });
+        });
 
-
-        mostrarFuncionario(
-          resultado
-        );
-
+        mostrarFuncionario(resultado);
 
       } catch (erro) {
 
-        mostrarErro(
-          erro
-        );
+        mostrarErro(erro);
 
       }
 
     }
 
 
-    // ======================================================
-    // MOSTRA FUNCIONÁRIO
-    // ======================================================
+    // =====================================================
+    // MOSTRAR FUNCIONÁRIO
+    // =====================================================
 
-    function mostrarFuncionario(
-      resultado
-    ) {
+    function mostrarFuncionario(resultado) {
 
-      const status =
-        document.getElementById(
-          "status"
-        );
+      if (!resultado || !resultado.encontrado) {
 
+        atualizarStatus(
 
-      if (
-        !resultado ||
-        !resultado.encontrado
-      ) {
-
-        status.className =
-          "status erro";
-
-
-        status.innerText =
-          resultado &&
-          resultado.mensagem
+          resultado && resultado.mensagem
             ? resultado.mensagem
-            : "Funcionário não encontrado.";
+            : "Funcionário não encontrado.",
 
+          "status erro"
 
-        setTimeout(
-          reiniciarLeitor,
-          3000
         );
 
+        setTimeout(reiniciarLeitor, 3000);
 
         return;
 
       }
 
+      funcionarioAtual = resultado;
 
-      funcionarioAtual =
-        resultado;
+      atualizarStatus(
+        "Funcionário identificado",
+        "status sucesso"
+      );
 
+      document.getElementById("nome").innerText =
+        resultado.nome || "";
 
-      status.className =
-        "status sucesso";
+      document.getElementById("matricula").innerText =
+        "Matrícula: " + (resultado.matricula || "");
 
-
-      status.innerText =
-        "Funcionário identificado";
-
-
-      document.getElementById(
-        "nome"
-      ).innerText =
-        resultado.nome;
-
-
-      document.getElementById(
-        "matricula"
-      ).innerText =
-        "Matrícula: " +
-        resultado.matricula;
-
-
-      document.getElementById(
-        "funcionario"
-      ).style.display =
+      document.getElementById("funcionario").style.display =
         "block";
 
     }
 
 
-    // ======================================================
+    // =====================================================
     // REGISTRAR PONTO
-    // ======================================================
+    // =====================================================
 
-    async function registrar(
-      tipo
-    ) {
+    async function registrar(tipo) {
 
-      if (
-        !funcionarioAtual
-      ) {
-
+      if (!funcionarioAtual) {
         return;
-
       }
 
-
-      const botoes =
-        document.querySelectorAll(
-          "button"
-        );
-
-
-      botoes.forEach(
-        function(botao) {
-
-          botao.disabled =
-            true;
-
-        }
+      const botoes = document.querySelectorAll(
+        ".botoes button"
       );
 
+      botoes.forEach(function(botao) {
+        botao.disabled = true;
+      });
 
-      const status =
-        document.getElementById(
-          "status"
-        );
-
-
-      status.className =
-        "status";
-
-
-      status.innerText =
-        "Registrando ponto...";
-
+      atualizarStatus("Registrando ponto...");
 
       try {
 
-        const resultado =
-          await enviarParaAppsScript({
+        const resultado = await enviarParaAppsScript({
 
-            acao:
-              "registrar",
+          acao: "registrar",
 
-            matricula:
-              funcionarioAtual.matricula,
+          matricula: funcionarioAtual.matricula,
 
-            nome:
-              funcionarioAtual.nome,
+          nome: funcionarioAtual.nome,
 
-            tipo:
-              tipo
+          tipo: tipo
 
-          });
+        });
 
-
-        if (
-          !resultado ||
-          !resultado.sucesso
-        ) {
+        if (!resultado || !resultado.sucesso) {
 
           throw new Error(
 
-            resultado &&
-            resultado.mensagem
+            resultado && resultado.mensagem
               ? resultado.mensagem
               : "Não foi possível registrar o ponto."
 
@@ -571,282 +381,261 @@
 
         }
 
-
-        status.className =
-          "status sucesso";
-
-
-        status.innerText =
-          "PONTO REGISTRADO COM SUCESSO";
-
-
-        setTimeout(
-          reiniciarLeitor,
-          2500
+        atualizarStatus(
+          "PONTO REGISTRADO COM SUCESSO",
+          "status sucesso"
         );
 
+        setTimeout(reiniciarLeitor, 2500);
 
       } catch (erro) {
 
-        mostrarErro(
-          erro
-        );
+        mostrarErro(erro);
 
-        botoes.forEach(
-          function(botao) {
-
-            botao.disabled =
-              false;
-
-          }
-        );
+        botoes.forEach(function(botao) {
+          botao.disabled = false;
+        });
 
       }
 
     }
 
 
-    // ======================================================
-    // ERRO
-    // ======================================================
+    // =====================================================
+    // MOSTRAR ERRO
+    // =====================================================
 
-    function mostrarErro(
-      erro
-    ) {
+    function mostrarErro(erro) {
 
-      const status =
-        document.getElementById(
-          "status"
-        );
+      const mensagem =
+        erro && erro.message
+          ? erro.message
+          : String(erro);
 
+      atualizarStatus(
+        "Erro: " + mensagem,
+        "status erro"
+      );
 
-      status.className =
-        "status erro";
+      setTimeout(reiniciarLeitor, 4000);
 
-
-      status.innerText =
-        "Erro: " +
-        (
-          erro.message ||
-          erro
-        );
+    }
 
 
-      setTimeout(
-        reiniciarLeitor,
-        4000
+    // =====================================================
+    // REINICIAR LEITOR
+    // =====================================================
+
+    function reiniciarLeitor() {
+
+      processando = false;
+      funcionarioAtual = null;
+
+      document.getElementById("funcionario").style.display =
+        "none";
+
+      document.querySelectorAll(
+        ".botoes button"
+      ).forEach(function(botao) {
+
+        botao.disabled = false;
+
+      });
+
+      atualizarStatus(
+        cameraIniciada
+          ? "Aponte a câmera para o QR Code"
+          : "Aguardando inicialização da câmera..."
       );
 
     }
 
 
-    // ======================================================
-    // REINICIAR
-    // ======================================================
-
-    function reiniciarLeitor() {
-
-      processando =
-        false;
-
-      funcionarioAtual =
-        null;
-
-
-      document.getElementById(
-        "funcionario"
-      ).style.display =
-        "none";
-
-
-      const status =
-        document.getElementById(
-          "status"
-        );
-
-
-      status.className =
-        "status";
-
-
-      status.innerText =
-        "Aponte a câmera para o QR Code";
-
-
-      document
-        .querySelectorAll(
-          "button"
-        )
-        .forEach(
-          function(botao) {
-
-            botao.disabled =
-              false;
-
-          }
-        );
-
-    }
-
-
-    // ======================================================
+    // =====================================================
     // INICIAR CÂMERA
-    // ======================================================
+    // =====================================================
 
-    function iniciarLeitor() {
+    async function iniciarLeitor() {
 
-      leitorQR =
-        new Html5Qrcode(
-          "leitor"
-        );
+      const elementoLeitor =
+        document.getElementById("leitor");
+
+      try {
+
+        atualizarStatus("Preparando a câmera...");
+
+        // Aguarda a biblioteca carregar.
+
+        let tentativas = 0;
+
+        while (
+          typeof Html5Qrcode === "undefined" &&
+          tentativas < 30
+        ) {
+
+          await new Promise(function(resolve) {
+            setTimeout(resolve, 200);
+          });
+
+          tentativas++;
+
+        }
+
+        if (typeof Html5Qrcode === "undefined") {
+
+          throw new Error(
+            "A biblioteca QR Code não carregou. Verifique a conexão com a internet."
+          );
+
+        }
+
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
+
+          throw new Error(
+            "O navegador não disponibilizou acesso à câmera. Abra o Totem pelo Chrome usando HTTPS."
+          );
+
+        }
+
+        leitorQR = new Html5Qrcode("leitor");
+
+        const configuracao = {
+
+          fps: 10,
+
+          qrbox: function(largura, altura) {
+
+            const lado = Math.floor(
+              Math.min(largura, altura) * 0.72
+            );
+
+            return {
+              width: lado,
+              height: lado
+            };
+
+          },
+
+          aspectRatio: 1.0,
+
+          disableFlip: false
+
+        };
 
 
-      Html5Qrcode.getCameras()
+        // PRIMEIRA TENTATIVA: CÂMERA TRASEIRA
 
-        .then(
-          function(cameras) {
+        try {
 
-            if (
-              !cameras ||
-              cameras.length === 0
-            ) {
+          await leitorQR.start(
 
-              throw new Error(
-                "Nenhuma câmera encontrada."
+            { facingMode: "environment" },
+
+            configuracao,
+
+            qrCodeLido,
+
+            function() {
+              // Ignora erros momentâneos de leitura.
+            }
+
+          );
+
+        } catch (erroCameraTraseira) {
+
+          // SEGUNDA TENTATIVA: IDENTIFICAR CÂMERAS DISPONÍVEIS
+
+          const cameras = await Html5Qrcode.getCameras();
+
+          if (!cameras || cameras.length === 0) {
+            throw erroCameraTraseira;
+          }
+
+          const cameraTraseira = cameras.find(
+            function(camera) {
+
+              const nome = (
+                camera.label || ""
+              ).toLowerCase();
+
+              return (
+                nome.includes("back") ||
+                nome.includes("rear") ||
+                nome.includes("traseira") ||
+                nome.includes("environment")
               );
 
             }
+          );
 
+          const cameraEscolhida = cameraTraseira
+            ? cameraTraseira.id
+            : cameras[cameras.length - 1].id;
 
-            // ==================================================
-            // PROCURA A CÂMERA FRONTAL
-            // ==================================================
+          await leitorQR.start(
 
-            const cameraFrontal =
-              cameras.find(
-                function(camera) {
+            cameraEscolhida,
 
-                  const nome =
-                    (
-                      camera.label ||
-                      ""
-                    ).toLowerCase();
+            configuracao,
 
+            qrCodeLido,
 
-                  return (
+            function() {
+              // Ignora erros momentâneos de leitura.
+            }
 
-                    nome.includes("front") ||
+          );
 
-                    nome.includes("frontal") ||
+        }
 
-                    nome.includes("user") ||
+        cameraIniciada = true;
 
-                    nome.includes("selfie")
-
-                  );
-
-                }
-              );
-
-
-            // ==================================================
-            // ESCOLHE A CÂMERA
-            // ==================================================
-
-            const cameraEscolhida =
-              cameraFrontal
-                ? cameraFrontal.id
-                : cameras[0].id;
-
-
-            console.log(
-              "Câmeras encontradas:",
-              cameras
-            );
-
-
-            console.log(
-              "Câmera escolhida:",
-              cameraEscolhida
-            );
-
-
-            // ==================================================
-            // INICIA O LEITOR
-            // ==================================================
-
-            return leitorQR.start(
-
-              cameraEscolhida,
-
-              {
-
-                fps: 10,
-
-                qrbox: {
-
-                  width: 250,
-
-                  height: 250
-
-                }
-
-              },
-
-              qrCodeLido,
-
-              function() {
-
-                // Ignora pequenos erros
-                // durante a leitura.
-
-              }
-
-            );
-
-          }
-
-        )
-
-        .catch(
-          function(erro) {
-
-            const status =
-              document.getElementById(
-                "status"
-              );
-
-
-            status.className =
-              "status erro";
-
-
-            status.innerText =
-              "Não foi possível acessar a câmera.";
-
-
-            console.error(
-              "Erro ao iniciar câmera:",
-              erro
-            );
-
-          }
+        atualizarStatus(
+          "Aponte a câmera para o QR Code"
         );
+
+      } catch (erro) {
+
+        cameraIniciada = false;
+
+        console.error(
+          "Erro ao iniciar leitor QR:",
+          erro
+        );
+
+        const mensagem = erro && erro.message
+          ? erro.message
+          : String(erro);
+
+        atualizarStatus(
+
+          "Não foi possível iniciar a câmera: " +
+          mensagem,
+
+          "status erro"
+
+        );
+
+        elementoLeitor.innerHTML = "";
+
+      }
 
     }
 
 
-    // ======================================================
-    // INICIAR
-    // ======================================================
+    // =====================================================
+    // INICIAR SISTEMA
+    // =====================================================
 
-    window.onload =
-      iniciarLeitor;
-
+    window.addEventListener(
+      "load",
+      iniciarLeitor
+    );
 
   </script>
 
-
 </body>
-
 </html>
