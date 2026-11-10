@@ -8,7 +8,6 @@
 
   <title>DISK PÃO - TOTEM DE PONTO</title>
 
-  <!-- BIBLIOTECA QR CODE -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
@@ -444,7 +443,7 @@
 
       atualizarStatus(
         cameraIniciada
-          ? "Aponte a câmera para o QR Code"
+          ? "Aponte a câmera frontal para o QR Code"
           : "Aguardando inicialização da câmera..."
       );
 
@@ -452,7 +451,7 @@
 
 
     // =====================================================
-    // INICIAR CÂMERA
+    // INICIAR CÂMERA FRONTAL
     // =====================================================
 
     async function iniciarLeitor() {
@@ -462,9 +461,7 @@
 
       try {
 
-        atualizarStatus("Preparando a câmera...");
-
-        // Aguarda a biblioteca carregar.
+        atualizarStatus("Preparando a câmera frontal...");
 
         let tentativas = 0;
 
@@ -526,13 +523,13 @@
         };
 
 
-        // PRIMEIRA TENTATIVA: CÂMERA TRASEIRA
+        // PRIMEIRA TENTATIVA: CÂMERA FRONTAL
 
         try {
 
           await leitorQR.start(
 
-            { facingMode: "environment" },
+            { facingMode: "user" },
 
             configuracao,
 
@@ -544,17 +541,17 @@
 
           );
 
-        } catch (erroCameraTraseira) {
+        } catch (erroCameraFrontal) {
 
-          // SEGUNDA TENTATIVA: IDENTIFICAR CÂMERAS DISPONÍVEIS
+          // SEGUNDA TENTATIVA: LOCALIZAR CÂMERA FRONTAL
 
           const cameras = await Html5Qrcode.getCameras();
 
           if (!cameras || cameras.length === 0) {
-            throw erroCameraTraseira;
+            throw erroCameraFrontal;
           }
 
-          const cameraTraseira = cameras.find(
+          const cameraFrontal = cameras.find(
             function(camera) {
 
               const nome = (
@@ -562,18 +559,21 @@
               ).toLowerCase();
 
               return (
-                nome.includes("back") ||
-                nome.includes("rear") ||
-                nome.includes("traseira") ||
-                nome.includes("environment")
+                nome.includes("front") ||
+                nome.includes("user") ||
+                nome.includes("selfie") ||
+                nome.includes("frontal")
               );
 
             }
           );
 
-          const cameraEscolhida = cameraTraseira
-            ? cameraTraseira.id
-            : cameras[cameras.length - 1].id;
+          // Se não houver identificação pelo nome,
+          // tenta a primeira câmera disponível.
+
+          const cameraEscolhida = cameraFrontal
+            ? cameraFrontal.id
+            : cameras[0].id;
 
           await leitorQR.start(
 
@@ -594,7 +594,7 @@
         cameraIniciada = true;
 
         atualizarStatus(
-          "Aponte a câmera para o QR Code"
+          "Aponte a câmera frontal para o QR Code"
         );
 
       } catch (erro) {
@@ -602,7 +602,7 @@
         cameraIniciada = false;
 
         console.error(
-          "Erro ao iniciar leitor QR:",
+          "Erro ao iniciar câmera frontal:",
           erro
         );
 
@@ -612,7 +612,7 @@
 
         atualizarStatus(
 
-          "Não foi possível iniciar a câmera: " +
+          "Não foi possível iniciar a câmera frontal: " +
           mensagem,
 
           "status erro"
