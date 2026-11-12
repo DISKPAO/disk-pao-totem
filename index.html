@@ -87,7 +87,14 @@
 
     .matricula {
       font-size: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+
+    .tipo-jornada {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #444;
     }
 
     .botoes {
@@ -109,6 +116,26 @@
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    .botao-entrada {
+      background: #168000;
+      color: white;
+    }
+
+    .botao-saida-almoco {
+      background: #b7791f;
+      color: white;
+    }
+
+    .botao-volta-almoco {
+      background: #2563a6;
+      color: white;
+    }
+
+    .botao-saida {
+      background: #b00020;
+      color: white;
     }
 
     .instrucao {
@@ -140,6 +167,15 @@
       #leitor {
         min-height: 250px;
       }
+
+      .nome {
+        font-size: 24px;
+      }
+
+      button {
+        font-size: 15px;
+        padding: 16px 6px;
+      }
     }
   </style>
 </head>
@@ -168,25 +204,39 @@
 
       <div id="matricula" class="matricula"></div>
 
+      <div id="tipoJornada" class="tipo-jornada"></div>
+
       <div class="instrucao">
         Selecione o tipo de registro
       </div>
 
       <div class="botoes">
 
-        <button onclick="registrar('ENTRADA')">
+        <button
+          class="botao-entrada"
+          data-tipo="ENTRADA"
+          onclick="registrar('ENTRADA')">
           ENTRADA
         </button>
 
-        <button onclick="registrar('SAIDA ALMOCO')">
+        <button
+          class="botao-saida-almoco"
+          data-tipo="SAIDA ALMOCO"
+          onclick="registrar('SAIDA ALMOCO')">
           SAÍDA ALMOÇO
         </button>
 
-        <button onclick="registrar('VOLTA ALMOCO')">
+        <button
+          class="botao-volta-almoco"
+          data-tipo="VOLTA ALMOCO"
+          onclick="registrar('VOLTA ALMOCO')">
           VOLTA ALMOÇO
         </button>
 
-        <button onclick="registrar('SAIDA')">
+        <button
+          class="botao-saida"
+          data-tipo="SAIDA"
+          onclick="registrar('SAIDA')">
           SAÍDA
         </button>
 
@@ -292,12 +342,63 @@
 
 
     // =====================================================
+    // CONFIGURAR BOTÕES CONFORME A JORNADA
+    // =====================================================
+
+    function configurarBotoesJornada(tipoJornada) {
+
+      const tipo = String(
+        tipoJornada || "NORMAL"
+      ).trim().toUpperCase();
+
+      const jornadaSemIntervalo =
+        tipo === "SEM_INTERVALO" ||
+        tipo === "HORA CORRIDA" ||
+        tipo === "HORA_CORRIDA";
+
+      const botoes = document.querySelectorAll(
+        ".botoes button"
+      );
+
+      botoes.forEach(function(botao) {
+
+        const tipoBotao = botao.dataset.tipo;
+
+        const ehBotaoAlmoco =
+          tipoBotao === "SAIDA ALMOCO" ||
+          tipoBotao === "VOLTA ALMOCO";
+
+        botao.style.display =
+          jornadaSemIntervalo && ehBotaoAlmoco
+            ? "none"
+            : "block";
+
+        botao.disabled = false;
+
+      });
+
+      const descricao =
+        jornadaSemIntervalo
+          ? "JORNADA SEM INTERVALO"
+          : tipo === "FOLGA"
+            ? "FOLGA"
+            : "JORNADA NORMAL";
+
+      document.getElementById("tipoJornada").innerText =
+        descricao;
+
+    }
+
+
+    // =====================================================
     // MOSTRAR FUNCIONÁRIO
     // =====================================================
 
     function mostrarFuncionario(resultado) {
 
       if (!resultado || !resultado.encontrado) {
+
+        funcionarioAtual = null;
 
         atualizarStatus(
 
@@ -316,6 +417,10 @@
       }
 
       funcionarioAtual = resultado;
+
+      configurarBotoesJornada(
+        resultado.tipoJornada
+      );
 
       atualizarStatus(
         "Funcionário identificado",
@@ -340,8 +445,34 @@
 
     async function registrar(tipo) {
 
-      if (!funcionarioAtual) {
+      if (!funcionarioAtual || processando === false) {
         return;
+      }
+
+      const tipoJornada = String(
+        funcionarioAtual.tipoJornada || "NORMAL"
+      ).trim().toUpperCase();
+
+      const jornadaSemIntervalo =
+        tipoJornada === "SEM_INTERVALO" ||
+        tipoJornada === "HORA CORRIDA" ||
+        tipoJornada === "HORA_CORRIDA";
+
+      if (
+        jornadaSemIntervalo &&
+        (
+          tipo === "SAIDA ALMOCO" ||
+          tipo === "VOLTA ALMOCO"
+        )
+      ) {
+
+        atualizarStatus(
+          "Esta jornada não possui intervalo para almoço.",
+          "status erro"
+        );
+
+        return;
+
       }
 
       const botoes = document.querySelectorAll(
@@ -381,7 +512,7 @@
         }
 
         atualizarStatus(
-          "PONTO REGISTRADO COM SUCESSO",
+          resultado.mensagem || "PONTO REGISTRADO COM SUCESSO",
           "status sucesso"
         );
 
@@ -392,7 +523,11 @@
         mostrarErro(erro);
 
         botoes.forEach(function(botao) {
-          botao.disabled = false;
+
+          if (botao.style.display !== "none") {
+            botao.disabled = false;
+          }
+
         });
 
       }
@@ -438,6 +573,7 @@
       ).forEach(function(botao) {
 
         botao.disabled = false;
+        botao.style.display = "block";
 
       });
 
@@ -567,9 +703,6 @@
 
             }
           );
-
-          // Se não houver identificação pelo nome,
-          // tenta a primeira câmera disponível.
 
           const cameraEscolhida = cameraFrontal
             ? cameraFrontal.id
